@@ -10,21 +10,20 @@ import {
     ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import image from "../images/image.png";
+import DarkMode from "./DarkMode";
 
 export default function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
-    const toggleMenu = () => setIsOpen(!isOpen);
-    const closeMenu = () => setIsOpen(false);
-
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    const toggleMenu = () => setIsOpen(!isOpen);
+    const closeMenu = () => setIsOpen(false);
 
     const navItems = [
         { name: "Home", to: "/HomePage", icon: <HomeIcon className="w-5 h-5" /> },
@@ -36,70 +35,65 @@ export default function Header() {
     return (
         <>
             <header
-                className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white/80 backdrop-blur-sm shadow-md" : "bg-transparent"
+                className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-[var(--color-bg)] dark:bg-[var(--color-bg)] ${isScrolled ? "backdrop-blur-md shadow-md" : ""
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    {/* <Link to="/" className="flex items-center gap-2">
-                        <svg
-                            className="w-8 h-8 text-[#3373b0]"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path d="M12 2L19 21H5L12 2Z" />
-                        </svg>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-sans">
-                            <span className="text-[#3373b0]">AI</span>{" "}
-                            <span className="text-[#1c2127]">Career</span>{" "}
-                            <span className="text-[#0b385f]">Companion</span>
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center gap-3 group">
+                        {/* Optional Icon (can be replaced with an image or SVG) */}
+                        <div className="w-8 h-8 bg-[var(--color-primary)] text-white font-bold text-lg rounded-full flex items-center justify-center group-hover:scale-105 transition">
+                            AI
+                        </div>
+
+                        {/* Brand Text */}
+                        <h1 className="text-md sm:text-2xl font-extrabold text-[var(--color-text)] leading-none group-hover:text-[var(--color-primary)] transition">
+                            CAREER COMPANION
                         </h1>
-                    </Link> */}
-                    {/* image-logo */}
-                    <Link to="/" className="flex items-center gap-2">
-                       <img src={image} alt="Description of the image" className="h-[1.7rem]" /> 
                     </Link>
-                    
-                    {/* Desktop Nav */}
-                    <nav className="hidden md:flex space-x-8 text-[#1c2127] text-[1.1rem] font-medium">
+
+                    {/* Desktop Navigation */}
+                    <nav className="hidden md:flex space-x-8 text-[var(--color-text)] text-[1.1rem] font-medium">
                         {navItems.slice(0, 3).map((item) => (
                             <Link
                                 key={item.name}
                                 to={item.to}
-                                className="hover:text-[#3373b0] transition"
+                                className="hover:text-[var(--color-primary)] transition"
                             >
                                 {item.name}
                             </Link>
                         ))}
                     </nav>
 
-                    {/* Auth Buttons */}
-                    <div className="hidden md:flex items-center gap-4 ml-6">
+                    {/* Right Side: Theme Toggle + Auth Buttons */}
+                    <div className="hidden md:flex items-center gap-4 ml-4">
+                        <DarkMode />
                         <Link
                             to="/login"
-                            className="px-4 py-2 border border-[#0b385f] text-[#0b385f] rounded-lg hover:bg-[#e7f1fb] transition"
+                            className="px-4 py-2 border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] rounded-lg hover:bg-[var(--color-muted)] transition"
                         >
                             Login
                         </Link>
                         <Link
                             to="/signup"
-                            className="px-4 py-2 bg-[#3373b0] hover:bg-[#0b385f] text-white font-semibold rounded-lg transition"
+                            className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-semibold rounded-lg transition"
                         >
                             Sign Up
                         </Link>
                     </div>
 
-                    {/* Mobile Icon */}
-                    <div className="md:hidden">
+                    {/* Mobile Menu Icon + DarkMode */}
+                    <div className="md:hidden flex items-center gap-4">
+                        <DarkMode />
                         <button onClick={toggleMenu}>
-                            <Bars3Icon className="w-7 h-7 text-[#1c2127]" />
+                            <Bars3Icon className="w-7 h-7 text-[var(--color-text)]" />
                         </button>
                     </div>
                 </div>
             </header>
 
-
-            {/* Mobile Sidebar (unchanged) */}
-            < AnimatePresence >
+            {/* Mobile Sidebar */}
+            <AnimatePresence>
                 {isOpen && (
                     <>
                         <motion.div
@@ -110,7 +104,7 @@ export default function Header() {
                             onClick={closeMenu}
                         />
                         <motion.div
-                            className="fixed top-0 right-0 h-full w-[85%] sm:w-[400px] bg-white text-[#1c2127] z-50 shadow-2xl flex flex-col justify-between"
+                            className="fixed top-0 right-0 h-full w-[85%] sm:w-[400px] bg-[var(--color-bg)] text-[var(--color-text)] z-50 shadow-2xl flex flex-col justify-between"
                             initial={{ x: "100%" }}
                             animate={{ x: 0 }}
                             exit={{ x: "100%" }}
@@ -120,7 +114,7 @@ export default function Header() {
                                 <div className="flex justify-between items-center mb-8">
                                     <h3 className="text-xl font-semibold">Navigation</h3>
                                     <button onClick={closeMenu}>
-                                        <XMarkIcon className="w-6 h-6 text-[#1c2127] hover:text-red-500 transition" />
+                                        <XMarkIcon className="w-6 h-6 hover:text-red-500 transition" />
                                     </button>
                                 </div>
 
@@ -130,16 +124,14 @@ export default function Header() {
                                             key={item.name}
                                             to={item.to}
                                             onClick={closeMenu}
-                                            className="flex items-center justify-between bg-[#e7f1fb] hover:bg-[#bed4e9] transition-all px-4 py-3 rounded-lg group"
+                                            className="flex items-center justify-between bg-[var(--color-muted)] hover:bg-[var(--color-accent)] transition-all px-4 py-3 rounded-lg group"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <span className="text-[#0b385f]">{item.icon}</span>
-                                                <span className="text-[#1c2127] font-medium">
-                                                    {item.name}
-                                                </span>
+                                                <span className="text-[var(--color-primary-dark)]">{item.icon}</span>
+                                                <span className="font-medium">{item.name}</span>
                                             </div>
                                             <motion.div
-                                                className="text-[#3373b0] group-hover:translate-x-1 transition-transform"
+                                                className="text-[var(--color-primary)] group-hover:translate-x-1 transition-transform"
                                                 initial={{ opacity: 0 }}
                                                 whileHover={{ opacity: 1 }}
                                             >
@@ -149,32 +141,35 @@ export default function Header() {
                                     ))}
                                 </nav>
 
-                                <div className="mt-10 space-y-3">
+                                <div className="mt-8 space-y-3">
                                     <Link
                                         to="/login"
                                         onClick={closeMenu}
-                                        className="block text-center border border-[#0b385f] text-[#0b385f] py-2 rounded-lg hover:bg-[#e7f1fb] transition"
+                                        className="block text-center border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] py-2 rounded-lg hover:bg-[var(--color-muted)] transition"
                                     >
                                         Login
                                     </Link>
                                     <Link
                                         to="/signup"
                                         onClick={closeMenu}
-                                        className="block text-center bg-[#3373b0] text-white py-2 rounded-lg font-semibold hover:bg-[#0b385f] transition"
+                                        className="block text-center bg-[var(--color-primary)] text-white py-2 rounded-lg font-semibold hover:bg-[var(--color-primary-dark)] transition"
                                     >
                                         Sign Up
                                     </Link>
                                 </div>
+
+                                <div className="mt-6">
+                                    <DarkMode />
+                                </div>
                             </div>
 
-                            <div className="p-6 text-sm text-center text-gray-500">
+                            <div className="p-6 text-sm text-center text-gray-500 dark:text-gray-400">
                                 © {new Date().getFullYear()} AI Career Companion. All rights reserved.
                             </div>
                         </motion.div>
                     </>
-                )
-                }
-            </AnimatePresence >
+                )}
+            </AnimatePresence>
         </>
     );
 }

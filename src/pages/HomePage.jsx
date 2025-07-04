@@ -11,10 +11,10 @@ export default function HomePage() {
     return (
         <div className="flex flex-col min-h-screen">
             <Header />
-            <CtaSection/>
+            <CtaSection />
             <HowItWorks />
             <ProductCard />
-            <WhyChooseUs/>
+            <WhyChooseUs />
             <Footer />
         </div>
     );
