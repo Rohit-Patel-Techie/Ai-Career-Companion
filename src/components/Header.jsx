@@ -10,7 +10,7 @@ import {
     ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import image from "../images/image.png";
-import DarkMode from "./DarkMode";
+import ThemeToggle from "./ThemeToggle"; 
 
 export default function Header() {
     const [isOpen, setIsOpen] = useState(false);
@@ -67,7 +67,7 @@ export default function Header() {
 
                     {/* Right Side: Theme Toggle + Auth Buttons */}
                     <div className="hidden md:flex items-center gap-4 ml-4">
-                        <DarkMode />
+                        <ThemeToggle />
                         <Link
                             to="/login"
                             className="px-4 py-2 border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] rounded-lg hover:bg-[var(--color-muted)] transition"
@@ -82,9 +82,9 @@ export default function Header() {
                         </Link>
                     </div>
 
-                    {/* Mobile Menu Icon + DarkMode */}
+                    {/* Mobile Menu Icon + ThemeToggle */}
                     <div className="md:hidden flex items-center gap-4">
-                        <DarkMode />
+                        <ThemeToggle />
                         <button onClick={toggleMenu}>
                             <Bars3Icon className="w-7 h-7 text-[var(--color-text)]" />
                         </button>
@@ -159,7 +159,7 @@ export default function Header() {
                                 </div>
 
                                 <div className="mt-6">
-                                    <DarkMode />
+                                    <ThemeToggle />
                                 </div>
                             </div>
 
