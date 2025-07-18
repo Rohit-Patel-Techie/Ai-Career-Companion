@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply font-sans;
+}
+
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1c2127;
+  --color-primary: #3373b0;
+  --color-primary-dark: #0b385f;
+  --color-muted: #e7f1fb;
+  --color-accent: #bed4e9;
+}
+
+/* Dark Theme */
+.dark {
+  --color-bg: #1c2127;
+  --color-text: #ffffff;
+  --color-primary: #82b6e7;
+  --color-primary-dark: #93b6d3;
+  --color-muted: #2c394f;
+  --color-accent: #364c5d;
+}
+
+/* Indigo Theme */
+.theme-indigo {
+  --color-bg: #eef2ff;
+  --color-text: #1e1b4b;
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-muted: #e0e7ff;
+  --color-accent: #c7d2fe;
+}
+
+/* Blue Theme */
+.theme-blue {
+  --color-bg: #eff6ff;
+  --color-text: #1e3a8a;
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-muted: #dbeafe;
+  --color-accent: #bfdbfe;
+}
+
+/* Pink Theme */
+.theme-pink {
+  --color-bg: #fff1f2;
+  --color-text: #831843;
+  --color-primary: #ec4899;
+  --color-primary-dark: #db2777;
+  --color-muted: #fbcfe8;
+  --color-accent: #f9a8d4;
+}
+
+/* Global body styles */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background 0.3s ease, color 0.3s ease;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.input-field {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  background: var(--color-muted);
+  color: var(--color-text);
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: var(--color-primary);
+  background: white;
+  outline: none;
+}
+
+.container { padding-bottom: 4rem; }
+@media (min-width: 768px) {
+  .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+}
+
