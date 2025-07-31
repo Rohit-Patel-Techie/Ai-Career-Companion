@@ -9,7 +9,7 @@ from openai import OpenAI
 # 🔐 OpenRouter API Client
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",
+    api_key="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",
 )
 
 # 🔁 Submit Career Profile + Get AI Suggestions
@@ -20,7 +20,9 @@ class CareerSubmitView(APIView):
             profile = serializer.save()
 
             prompt = f"""
-The user has the following profile:
+You are an AI career advisor. The user has provided their profile below. Based on this, suggest exactly 3 career paths that align with their background, interests, and constraints.
+
+User Profile:
 - Full Name: {profile.fullName}
 - Email: {profile.email}
 - Education: {profile.education}
@@ -28,12 +30,41 @@ The user has the following profile:
 - Skills: {profile.skills}
 - Interests: {profile.interests}
 - Goals: {profile.goals}
-- Preferred Field: {profile.preferredField}
+- Preferred Fields: {profile.preferredField}
 - Learning Style: {profile.learningStyle}
 - Challenges: {profile.challenges}
 
-Based on this, suggest 2 suitable career paths and the skills/tools required.
+Respond only with a valid JSON object using the following structure. Make sure to include labor market data like job demand, salary estimates, industry trends, and future scope.
+
+JSON format:
+{{
+  "career_paths": [
+    {{
+      "title": "string",                          // Career title
+      "description": "string",                    // Short summary of the role
+      "skills": ["string"],                       // List of key tools, languages, or concepts to learn
+      "resources": [                              // Free or low-cost, video-based learning resources
+        {{
+          "name": "string",
+          "url": "string"
+        }}
+      ],
+      "icon": "string",                           // Emoji or icon to visually represent the career
+      "reason": "string",                         // Why this is a good fit for the user
+      "labor_market": {{
+        "job_demand": "string",                   // e.g., High, Moderate, Low
+        "salary_range": "string",                 // e.g., 5-10/LPA Rupees
+        "industry_growth": "string",              // e.g., 'Growing at 12% annually'
+        "future_scope": "string"                  // e.g., 'High demand expected for the next decade'
+      }}
+    }},
+    ...
+  ]
+}}
+
+Do not include any extra text, explanation, or commentary. Only return a valid JSON object as per the structure above.
 """
+            print("prompt : ", prompt)
 
             try:
                 response = client.chat.completions.create(
@@ -101,3 +132,41 @@ def dashboard_data(request):
 
     except CareerProfile.DoesNotExist:
         return Response({"error": "No profile found."}, status=404)
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    user = request.user
+    try:
+        profile = CareerProfile.objects.filter(email=user.email).latest('created_at')
+    except CareerProfile.DoesNotExist:
+        profile = None
+
+    data = {
+        "username": user.username,
+        "email": user.email,
+        "fullName": profile.fullName if profile else "",
+        "currentlyLiving": profile.currentlyLiving if profile else "",
+        "gradeOrYear": profile.gradeOrYear if profile else "",
+        "subjects": profile.subjects if profile else [],
+        "lastClassPercentageOrCGPA": profile.lastClassPercentageOrCGPA if profile else "",
+        "currentCourse": profile.currentCourse if profile else "",
+        "lastYearCGPA": profile.lastYearCGPA if profile else "",
+        "education": profile.education if profile else "",
+        "experience": profile.experience if profile else "",
+        "skills": profile.skills if profile else [],
+        "interests": profile.interests if profile else [],
+        "usedAIToolBefore": profile.usedAIToolBefore if profile else "",
+        "goals": profile.goals if profile else "",
+        "mainGoal": profile.mainGoal if profile else "",
+        "preferredField": profile.preferredField if profile else "",
+        "learningTime": profile.learningTime if profile else "",
+        "learningStyle": profile.learningStyle if profile else "",
+        "longTermCareerGoal": profile.longTermCareerGoal if profile else "",
+        "challenges": profile.challenges if profile else "",
+        "biggestCareerChallenge": profile.biggestCareerChallenge if profile else "",
+    }
+    return Response(data)

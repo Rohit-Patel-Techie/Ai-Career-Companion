@@ -11,7 +11,7 @@ export default function HeroSection() {
       <div className="max-w-6xl w-full text-center pt-24">
         {/* Headline with Typewriter */}
         <h1 className="text-3xl md:text-5xl font-extrabold leading-tight mb-6">
-          Unlock Your Future with <br />
+          Unlock Your Future with<br />
           <span className="text-[var(--color-primary)] inline-block mt-2">
             <Typewriter
               options={{

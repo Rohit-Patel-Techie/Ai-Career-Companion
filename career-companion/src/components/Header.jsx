@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     Bars3Icon,
     XMarkIcon,
@@ -9,12 +9,13 @@ import {
     ChartBarIcon,
     ArrowRightIcon,
 } from "@heroicons/react/24/outline";
-import image from "../images/image.png";
 import ThemeToggle from "./ThemeToggle"; 
 
 export default function Header() {
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [user, setUser] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -22,8 +23,24 @@ export default function Header() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    useEffect(() => {
+        // Check if user is logged in by checking localStorage token
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            setUser({ name: "User" }); // You can fetch user info from API if needed
+        } else {
+            setUser(null);
+        }
+    }, []);
+
     const toggleMenu = () => setIsOpen(!isOpen);
     const closeMenu = () => setIsOpen(false);
+
+    const logout = () => {
+        localStorage.removeItem("access_token");
+        setUser(null);
+        navigate("/login");
+    };
 
     const navItems = [
         { name: "Home", to: "/HomePage", icon: <HomeIcon className="w-5 h-5" /> },
@@ -39,14 +56,11 @@ export default function Header() {
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    {/* Logo */}
+                    {/* Logo */} 
                     <Link to="/" className="flex items-center gap-3 group">
-                        {/* Optional Icon (can be replaced with an image or SVG) */}
                         <div className="w-8 h-8 bg-[var(--color-primary)] text-white font-bold text-lg rounded-full flex items-center justify-center group-hover:scale-105 transition">
                             AI
                         </div>
-
-                        {/* Brand Text */}
                         <h1 className="text-md sm:text-2xl font-extrabold text-[var(--color-text)] leading-none group-hover:text-[var(--color-primary)] transition">
                             CAREER COMPANION
                         </h1>
@@ -65,21 +79,35 @@ export default function Header() {
                         ))}
                     </nav>
 
-                    {/* Right Side: Theme Toggle + Auth Buttons */}
+                    {/* Right Side: Theme Toggle + Auth Buttons or User Info */}
                     <div className="hidden md:flex items-center gap-4 ml-4">
                         <ThemeToggle />
-                        <Link
-                            to="/login"
-                            className="px-4 py-2 border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] rounded-lg hover:bg-[var(--color-muted)] transition"
-                        >
-                            Login
-                        </Link>
-                        <Link
-                            to="/signup"
-                            className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-semibold rounded-lg transition"
-                        >
-                            Sign Up
-                        </Link>
+                        {user ? (
+                            <>
+                                <button onClick={() => navigate("/profile")} className="flex items-center gap-2">
+                                    <UserCircleIcon className="w-6 h-6" />
+                                    <span>{user.name}</span>
+                                </button>
+                                <button onClick={logout} className="hover:underline">
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    to="/login"
+                                    className="px-4 py-2 border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] rounded-lg hover:bg-[var(--color-muted)] transition"
+                                >
+                                    Login
+                                </Link>
+                                <Link
+                                    to="/signup"
+                                    className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-semibold rounded-lg transition"
+                                >
+                                    Sign Up
+                                </Link>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Icon + ThemeToggle */}
@@ -142,20 +170,45 @@ export default function Header() {
                                 </nav>
 
                                 <div className="mt-8 space-y-3">
-                                    <Link
-                                        to="/login"
-                                        onClick={closeMenu}
-                                        className="block text-center border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] py-2 rounded-lg hover:bg-[var(--color-muted)] transition"
-                                    >
-                                        Login
-                                    </Link>
-                                    <Link
-                                        to="/signup"
-                                        onClick={closeMenu}
-                                        className="block text-center bg-[var(--color-primary)] text-white py-2 rounded-lg font-semibold hover:bg-[var(--color-primary-dark)] transition"
-                                    >
-                                        Sign Up
-                                    </Link>
+                                    {user ? (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    closeMenu();
+                                                    navigate("/profile");
+                                                }}
+                                                className="block w-full text-center border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] py-2 rounded-lg hover:bg-[var(--color-muted)] transition"
+                                            >
+                                                Profile
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    closeMenu();
+                                                    logout();
+                                                }}
+                                                className="block w-full text-center bg-[var(--color-primary)] text-white py-2 rounded-lg font-semibold hover:bg-[var(--color-primary-dark)] transition"
+                                            >
+                                                Logout
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link
+                                                to="/login"
+                                                onClick={closeMenu}
+                                                className="block text-center border border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] py-2 rounded-lg hover:bg-[var(--color-muted)] transition"
+                                            >
+                                                Login
+                                            </Link>
+                                            <Link
+                                                to="/signup"
+                                                onClick={closeMenu}
+                                                className="block text-center bg-[var(--color-primary)] text-white py-2 rounded-lg font-semibold hover:bg-[var(--color-primary-dark)] transition"
+                                            >
+                                                Sign Up
+                                            </Link>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="mt-6">
