@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import FormSidebar from "../components/FormSidebar";
@@ -6,9 +6,23 @@ import ProgressBar from "../components/ProgressBar";
 import StepForm from "../components/StepForm";
 import { motion } from "framer-motion";
 
+
 export default function Profile() {
   const [step, setStep] = useState(0);
   const totalSteps = 6;
+  const formContainerRef = useRef(null);
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, 50);
+    return () => {
+      window.history.scrollRestoration = 'auto';
+    };
+  }, []);
 
   const nextStep = () => {
     if (step < totalSteps) setStep(step + 1);
@@ -18,22 +32,29 @@ export default function Profile() {
     if (step > 0) setStep(step - 1);
   };
 
+  useEffect(() => {
+    if (formContainerRef.current) {
+      formContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [step]);
+
   return (
     <>
       <Header />
-      <div className="min-h-[90vh] mt-12 py-10 px-2 md:px-8 relative flex justify-center items-center font-sans overflow-x-hidden bg-gradient-to-br from-blue-200 via-white to-purple-200">
+      <div className="min-h-[90vh] mt-20 py-10 px-2 md:px-8 relative flex justify-center items-center font-sans overflow-x-hidden bg-gradient-to-br from-blue-200 via-white to-purple-200">
         {/* Decorative blurred shapes for extra vibrance */}
-        <div className="absolute top-0 left-0 w-72 h-72 bg-blue-300 rounded-full opacity-30 blur-2xl -z-10" style={{top: '-4rem', left: '-4rem'}} />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300 rounded-full opacity-20 blur-2xl -z-10" style={{bottom: '-6rem', right: '-6rem'}} />
-        <div className="absolute top-1/2 left-1/2 w-1/2 h-32 bg-pink-100 rounded-full opacity-10 blur-3xl -z-10" style={{transform: 'translate(-50%, -50%)'}} />
+        {/* <div className="absolute top-0 left-0 w-72 h-72 bg-blue-300 rounded-full opacity-30 blur-2xl -z-10" style={{ top: '-4rem', left: '-4rem' }} />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300 rounded-full opacity-20 blur-2xl -z-10" style={{ bottom: '-6rem', right: '-6rem' }} />
+        <div className="absolute top-1/2 left-1/2 w-1/2 h-32 bg-pink-100 rounded-full opacity-10 blur-3xl -z-10" style={{ transform: 'translate(-50%, -50%)' }} /> */}
         <motion.div
           className="flex flex-col md:flex-row gap-8 w-full max-w-6xl rounded-2xl shadow-2xl bg-white/90 p-4 md:p-8 border border-blue-200 items-start"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
+          ref={formContainerRef}
         >
           <motion.aside
-            className="md:w-1/3 w-full mb-4 md:mb-0"
+            className="md:w-1/3 w-full mt-[-4rem]  mb-4 md:mb-0"
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}

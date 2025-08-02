@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,6 +11,7 @@ SECRET_KEY = 'django-insecure-a+z_)4(=2*j)(yblt^aiouctw3gt7#2(@2vob54x252f@kjcvh
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
 
 
 # Application definition
@@ -38,6 +39,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+AUTH_USER_MODEL = 'career_api.CustomUser'
 
 CORS_ALLOW_ALL_ORIGINS = False
 
@@ -121,7 +124,8 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom user model
-
+MAILGUN_DOMAIN = config('MAILGUN_DOMAIN')
+MAILGUN_API_KEY = config('MAILGUN_API_KEY')
 
 from datetime import timedelta
 
