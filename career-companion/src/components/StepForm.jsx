@@ -129,18 +129,14 @@ export default function StepForm({ step, nextStep, prevStep }) {
         lastClassPercentageOrCGPA: "",
         currentCourse: "",
         lastYearCGPA: "",
-        education: "",
-        experience: "",
         skills: [],
         interests: [],
         usedAIToolBefore: "",
-        goals: "",
+        experience: "",
         mainGoal: "",
-        preferredField: "",
         learningTime: "",
         learningStyle: "",
         longTermCareerGoal: "",
-        challenges: "",
         biggestCareerChallenge: "",
     });
     const [subjectInput, setSubjectInput] = useState("");
@@ -184,18 +180,14 @@ export default function StepForm({ step, nextStep, prevStep }) {
                         lastClassPercentageOrCGPA: data.lastClassPercentageOrCGPA || "",
                         currentCourse: data.currentCourse || "",
                         lastYearCGPA: data.lastYearCGPA || "",
-                        education: data.education || "",
                         experience: data.experience || "",
                         skills: data.skills || [],
                         interests: data.interests || [],
                         usedAIToolBefore: data.usedAIToolBefore || "",
-                        goals: data.goals || "",
                         mainGoal: data.mainGoal || "",
-                        preferredField: data.preferredField || "",
                         learningTime: data.learningTime || "",
                         learningStyle: data.learningStyle || "",
                         longTermCareerGoal: data.longTermCareerGoal || "",
-                        challenges: data.challenges || "",
                         biggestCareerChallenge: data.biggestCareerChallenge || "",
                     }));
                 }
@@ -210,6 +202,19 @@ export default function StepForm({ step, nextStep, prevStep }) {
     }, []);
 
     const handleChange = (name, value) => {
+        if (name === "fullName") {
+            const lastChar = value.slice(-1);
+            if (/[^a-zA-Z\s]/.test(lastChar)) {
+                toast.error("Only letters and spaces are allowed in name", {
+                    position: "top-right",
+                    autoClose: 2000,
+                    hideProgressBar: true,
+                    theme: "colored",
+                });
+                return;
+            }
+        }
+
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
@@ -287,12 +292,18 @@ export default function StepForm({ step, nextStep, prevStep }) {
         );
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     // Step validation functions
     const validateStep = () => {
         let stepErrors = {};
         if (step === 0) {
             if (!formData.fullName.trim()) stepErrors.fullName = "Full Name is required";
-            if (!formData.email.trim()) stepErrors.email = "Email is required";
+            if (!formData.email.trim()) {
+                stepErrors.email = "Email is required";
+            } else if (!emailRegex.test(formData.email.trim())) {
+                stepErrors.email = "Enter a valid email address";
+            }
             if (!formData.currentlyLiving.trim()) stepErrors.currentlyLiving = "City is required";
         }
         if (step === 1) {
@@ -525,7 +536,7 @@ export default function StepForm({ step, nextStep, prevStep }) {
 
             {step === 3 && (
                 <div className="space-y-4">
-                    <label className="block font-semibold flex items-center gap-2"><FiEdit2 className="text-blue-500" /> Have You Used Any AI Tool Before?</label>
+                    <label className="block font-semibold flex items-center gap-2"><FiEdit2 className="text-blue-500" /> Have You Used Any AI Tool Before?<span className="text-red-500">*</span></label>
                     <select
                         name="usedAIToolBefore"
                         value={formData.usedAIToolBefore}
@@ -540,7 +551,7 @@ export default function StepForm({ step, nextStep, prevStep }) {
                         ))}
                     </select>
                     {errors.usedAIToolBefore && <div className="text-red-500 text-sm mt-1">{errors.usedAIToolBefore}</div>}
-                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiTarget className="text-blue-500" /> What Are Your Main Goals Right Now?</label>
+                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiTarget className="text-blue-500" /> What Are Your Main Goals Right Now?<span className="text-red-500">*</span></label>
                     <textarea
                         name="mainGoal"
                         value={formData.mainGoal}
@@ -549,11 +560,20 @@ export default function StepForm({ step, nextStep, prevStep }) {
                         placeholder="Describe your main goals"
                     />
                     {errors.mainGoal && <div className="text-red-500 text-sm mt-1">{errors.mainGoal}</div>}
+                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiTarget className="text-blue-500" /> Any Work Experience?</label>
+                    <textarea
+                        name="mainGoal"
+                        value={formData.experience}
+                        onChange={(e) => handleChange("experience", e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Describe your Experience in Which Field and How Much...?"
+                    />
+                    {errors.experience && <div className="text-red-500 text-sm mt-1">{errors.experience}</div>}
                 </div>
             )}
             {step === 4 && (
                 <div className="space-y-4">
-                    <label className="block font-semibold flex items-center gap-2"><FiClock className="text-blue-500" /> How Much Time Can You Spend Learning New Things or Skills?</label>
+                    <label className="block font-semibold flex items-center gap-2"><FiClock className="text-blue-500" /> How Much Time Can You Spend Learning New Things or Skills?<span className="text-red-500">*</span></label>
                     <select
                         name="learningTime"
                         value={formData.learningTime}
@@ -568,7 +588,7 @@ export default function StepForm({ step, nextStep, prevStep }) {
                         ))}
                     </select>
                     {errors.learningTime && <div className="text-red-500 text-sm mt-1">{errors.learningTime}</div>}
-                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiBookOpen className="text-blue-500" /> How Do You Learn Best?</label>
+                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiBookOpen className="text-blue-500" /> How Do You Learn Best?<span className="text-red-500">*</span></label>
                     <select
                         name="learningStyle"
                         value={formData.learningStyle}
@@ -587,7 +607,7 @@ export default function StepForm({ step, nextStep, prevStep }) {
             )}
             {step === 5 && (
                 <div className="space-y-4">
-                    <label className="block font-semibold flex items-center gap-2"><FiTarget className="text-blue-500" /> What Long Term Career Goal Do You Want to Make?</label>
+                    <label className="block font-semibold flex items-center gap-2"><FiTarget className="text-blue-500" /> What Long Term Career Goal Do You Want to Make?<span className="text-red-500">*</span></label>
                     <textarea
                         name="longTermCareerGoal"
                         value={formData.longTermCareerGoal}
@@ -596,7 +616,7 @@ export default function StepForm({ step, nextStep, prevStep }) {
                         placeholder="Describe your long term career goal"
                     />
                     {errors.longTermCareerGoal && <div className="text-red-500 text-sm mt-1">{errors.longTermCareerGoal}</div>}
-                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiEdit2 className="text-blue-500" /> Biggest Career Challenge You Think You Have</label>
+                    <label className="block font-semibold mt-4 flex items-center gap-2"><FiEdit2 className="text-blue-500" /> Biggest Career Challenge You Think You Have<span className="text-red-500">*</span></label>
                     <textarea
                         name="biggestCareerChallenge"
                         value={formData.biggestCareerChallenge}

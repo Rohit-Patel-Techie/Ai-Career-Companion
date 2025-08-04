@@ -155,18 +155,14 @@ def user_profile(request):
         "lastClassPercentageOrCGPA": profile.lastClassPercentageOrCGPA if profile else "",
         "currentCourse": profile.currentCourse if profile else "",
         "lastYearCGPA": profile.lastYearCGPA if profile else "",
-        "education": profile.education if profile else "",
         "experience": profile.experience if profile else "",
         "skills": profile.skills if profile else [],
         "interests": profile.interests if profile else [],
         "usedAIToolBefore": profile.usedAIToolBefore if profile else "",
-        "goals": profile.goals if profile else "",
         "mainGoal": profile.mainGoal if profile else "",
-        "preferredField": profile.preferredField if profile else "",
         "learningTime": profile.learningTime if profile else "",
         "learningStyle": profile.learningStyle if profile else "",
         "longTermCareerGoal": profile.longTermCareerGoal if profile else "",
-        "challenges": profile.challenges if profile else "",
         "biggestCareerChallenge": profile.biggestCareerChallenge if profile else "",
     }
     return Response(data)
