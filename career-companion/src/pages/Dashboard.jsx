@@ -5,11 +5,13 @@ import CareerProgressChart from "../components/CareerProgressChart";
 import SkillBox from "../components/SkillBox";
 import RecommendedSkills from "../components/RecommendedSkills";
 import CareerSuggestionCard from "../components/CareerSuggestionCard";
+import UserInterest from "../components/UserInterest";
 
 const Dashboard = () => {
   const [userData, setUserData] = useState({
     fullName: "User",
     skills: [],
+    interests: [],
   });
   const [careerSuggestions, setCareerSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,37 +33,73 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetch("http://192.168.1.3:8000/api/dashboard-data/")
-      .then((res) => res.json())
-      .then((data) => {
-        const { fullName, currentSkills, suggestion } = data;
+    const loadDashboard = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch("http://localhost:8000/api/dashboard-data/", {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch dashboard data:", res.status, res.statusText);
+          setLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        const { fullName, currentSkills, suggestion, currentInterests } = data || {};
 
         let suggestions = [];
 
-        try {
-          const cleaned = suggestion
-            .replace(/```json/g, "")
-            .replace(/```/g, "")
-            .trim();
+        if (typeof suggestion === 'string' && suggestion.trim().length > 0) {
+          try {
+            const cleaned = suggestion
+              .replace(/```json/g, "")
+              .replace(/```/g, "")
+              .trim();
 
-          const parsed = JSON.parse(cleaned);
-          suggestions = parsed.career_paths || [];
-        } catch (err) {
-          console.error("Failed to parse suggestion JSON:", err);
+            const parsed = JSON.parse(cleaned);
+            suggestions = Array.isArray(parsed.career_paths) ? parsed.career_paths : [];
+          } catch (err) {
+            console.error("Failed to parse suggestion JSON:", err);
+          }
+        }
+
+        // Attempt to get interests from dashboard-data first
+        let interests = Array.isArray(currentInterests) ? currentInterests : [];
+        // If not present, fallback to user-profile endpoint
+        if (!interests.length) {
+          try {
+            const token2 = localStorage.getItem('access_token');
+            const res2 = await fetch("http://localhost:8000/api/user-profile/", {
+              headers: token2 ? { 'Authorization': `Bearer ${token2}` } : {},
+              credentials: 'include',
+            });
+            if (res2.ok) {
+              const up = await res2.json();
+              interests = Array.isArray(up.interests) ? up.interests : [];
+            }
+          } catch (e) {
+            console.warn("Failed to fetch user-profile interests fallback", e);
+          }
         }
 
         setUserData({
           fullName: fullName || "User",
-          skills: currentSkills || [],
+          skills: Array.isArray(currentSkills) ? currentSkills : [],
+          interests,
         });
 
         setCareerSuggestions(suggestions.slice(0, 3));
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Failed to fetch:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    loadDashboard();
   }, []);
 
   return (
@@ -104,9 +142,11 @@ const Dashboard = () => {
 
             <CareerProgressChart skills={userData.skills} />
 
+
+
             <div>
               <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-400 mb-6">
-                Based on your profile, {userData.fullName}, here are your top
+                Based on your profile {userData.fullName}, here are your top
                 career paths:
               </h2>
 
@@ -131,7 +171,13 @@ const Dashboard = () => {
           </div>
 
           {/* Right Section */}
-          <SkillBox skills={userData.skills} />
+          <div>
+            <div>
+              <UserInterest interests={userData.interests} /><br />
+            </div>
+            <SkillBox skills={userData.skills} />
+          </div>
+                  
         </div>
       </div>
     </div>

@@ -66,50 +66,129 @@ const learningStyleOptions = [
     "Projects",
 ];
 
-// SkillInput component for tag-style skill entry
-function SkillInput({ skills, setSkills }) {
-    const [input, setInput] = React.useState("");
+// SkillsEditor component for skills with proficiency (0-100)
+function SkillsEditor({ skills, setSkills }) {
+    const [name, setName] = React.useState("");
+    const [proficiency, setProficiency] = React.useState(50);
 
     const addSkill = () => {
-        const trimmed = input.trim();
-        if (trimmed && !skills.includes(trimmed)) {
-            setSkills([...skills, trimmed]);
+        const trimmed = name.trim();
+        const profNum = Math.max(0, Math.min(100, Number(proficiency) || 0));
+        if (!trimmed) return;
+        // prevent duplicate names (case-insensitive)
+        if (skills.some(s => (s?.name || "").toLowerCase() === trimmed.toLowerCase())) {
+            toast.error("Skill already added!", { position: "top-right" });
+            return;
         }
-        setInput("");
+        setSkills([...(skills || []), { name: trimmed, proficiency: profNum }]);
+        setName("");
+        setProficiency(50);
     };
+
+    const updateName = (idx, value) => {
+        const newSkills = skills.map((s, i) => i === idx ? { ...s, name: value } : s);
+        setSkills(newSkills);
+    };
+
+    const updateProficiency = (idx, value) => {
+        const profNum = Math.max(0, Math.min(100, Number(value) || 0));
+        const newSkills = skills.map((s, i) => i === idx ? { ...s, proficiency: profNum } : s);
+        setSkills(newSkills);
+    };
+
     const removeSkill = (idx) => {
-        setSkills(skills.filter((_, i) => i !== idx));
+        const newSkills = skills.filter((_, i) => i !== idx);
+        setSkills(newSkills);
     };
+
     return (
-        <div>
-            <div className="flex flex-wrap gap-2 mb-2">
-                {skills.map((skill, idx) => (
-                    <span key={idx} className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-                        {skill}
+        <div className="space-y-4">
+            {/* Existing skills list with inline edit */}
+            <div className="space-y-3">
+                {(skills || []).length === 0 && (
+                    <div className="text-gray-500 text-sm">No skills added yet.</div>
+                )}
+                {(skills || []).map((s, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg bg-gray-50">
+                        <div className="flex-1 w-full">
+                            <input
+                                type="text"
+                                value={s.name}
+                                onChange={(e) => updateName(idx, e.target.value)}
+                                className="w-full p-2 border rounded"
+                                placeholder="Skill name (e.g., React, Python)"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                value={Number(s.proficiency) || 0}
+                                onChange={(e) => updateProficiency(idx, e.target.value)}
+                                className="w-40"
+                            />
+                            <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={Number(s.proficiency) || 0}
+                                onChange={(e) => updateProficiency(idx, e.target.value)}
+                                className="w-20 p-2 border rounded"
+                            />
+                            <span className="text-sm text-gray-600">/ 100</span>
+                        </div>
                         <button
                             type="button"
                             onClick={() => removeSkill(idx)}
-                            className="ml-2 text-green-600 hover:text-red-600 font-bold text-base"
+                            className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200"
                             aria-label="Remove skill"
                         >
-                            ×
+                            Remove
                         </button>
-                    </span>
+                    </div>
                 ))}
             </div>
-            <div className="flex gap-2">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
-                    className="flex-grow p-2 border rounded"
-                    placeholder="Add a new skill and press Enter"
-                />
+
+            {/* Add new skill */}
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                <div className="flex-1 w-full">
+                    <label className="block text-sm font-medium mb-1">Skill Name</label>
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="e.g., JavaScript"
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1">Proficiency (0-100)</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={proficiency}
+                            onChange={(e) => setProficiency(Number(e.target.value))}
+                            className="w-40"
+                        />
+                        <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={proficiency}
+                            onChange={(e) => setProficiency(Number(e.target.value))}
+                            className="w-20 p-2 border rounded"
+                        />
+                        <span className="text-sm text-gray-600">/ 100</span>
+                    </div>
+                </div>
                 <button
                     type="button"
                     onClick={addSkill}
-                    className="px-4 py-2 bg-green-600 text-white rounded min-w-[100px]"
+                    className="px-4 py-2 bg-green-600 text-white rounded min-w-[120px]"
                 >
                     Add Skill
                 </button>
@@ -156,6 +235,26 @@ export default function StepForm({ step, nextStep, prevStep }) {
         if (savedFormData) {
             const parsed = JSON.parse(savedFormData);
             if (!gradeOptions.includes(parsed.gradeOrYear)) parsed.gradeOrYear = "";
+            // Normalize skills to objects { name, proficiency }
+            if (Array.isArray(parsed.skills)) {
+                parsed.skills = parsed.skills.map((s) => {
+                    if (typeof s === 'string') {
+                        // Try to parse formats like "React:80" or "React (80/100)"
+                        if (s.includes(':')) {
+                            const [n, p] = s.split(':');
+                            const prof = parseInt(p, 10);
+                            return { name: (n || '').trim(), proficiency: isNaN(prof) ? 50 : Math.max(0, Math.min(100, prof)) };
+                        }
+                        const match = s.match(/\((\d{1,3})\s*\/\s*100\)/);
+                        const prof = match ? parseInt(match[1], 10) : 50;
+                        return { name: s.replace(/\(.*\)/, '').trim(), proficiency: Math.max(0, Math.min(100, prof)) };
+                    }
+                    if (s && typeof s === 'object') return { name: s.name || '', proficiency: Math.max(0, Math.min(100, Number(s.proficiency) || 0)) };
+                    return { name: String(s || ''), proficiency: 50 };
+                }).filter(s => s.name);
+            } else {
+                parsed.skills = [];
+            }
             setFormData(parsed);
         }
 
@@ -181,7 +280,22 @@ export default function StepForm({ step, nextStep, prevStep }) {
                         currentCourse: data.currentCourse || "",
                         lastYearCGPA: data.lastYearCGPA || "",
                         experience: data.experience || "",
-                        skills: data.skills || [],
+                        skills: Array.isArray(data.skills)
+                            ? data.skills.map((s) => {
+                                if (typeof s === 'string') {
+                                    if (s.includes(':')) {
+                                        const [n, p] = s.split(':');
+                                        const prof = parseInt(p, 10);
+                                        return { name: (n || '').trim(), proficiency: isNaN(prof) ? 50 : Math.max(0, Math.min(100, prof)) };
+                                    }
+                                    const match = s.match(/\((\d{1,3})\s*\/\s*100\)/);
+                                    const prof = match ? parseInt(match[1], 10) : 50;
+                                    return { name: s.replace(/\(.*\)/, '').trim(), proficiency: Math.max(0, Math.min(100, prof)) };
+                                }
+                                if (s && typeof s === 'object') return { name: s.name || '', proficiency: Math.max(0, Math.min(100, Number(s.proficiency) || 0)) };
+                                return { name: String(s || ''), proficiency: 50 };
+                            }).filter(s => s.name)
+                            : [],
                         interests: data.interests || [],
                         usedAIToolBefore: data.usedAIToolBefore || "",
                         mainGoal: data.mainGoal || "",
@@ -243,23 +357,11 @@ export default function StepForm({ step, nextStep, prevStep }) {
         toast.info("Subject removed!", { position: "top-right" });
     };
 
-    const addSkill = () => {
-        setFormData((prev) => ({ ...prev, skills: [...prev.skills, ""] }));
-    };
-
-    const updateSkill = (index, value) => {
-        const newSkills = [...formData.skills];
-        newSkills[index] = value;
-        setFormData((prev) => ({ ...prev, skills: newSkills }));
-    };
-
-    const removeSkill = (index) => {
-        const newSkills = [...formData.skills];
-        newSkills.splice(index, 1);
-        setFormData((prev) => ({ ...prev, skills: newSkills }));
-    };
-
+    
+    
+    
     const handleSubmit = async () => {
+        console.log("FormData",formData)
         try {
             const token = localStorage.getItem("access_token");
             const res = await fetch("http://localhost:8000/api/submit-profile/", {
@@ -270,7 +372,10 @@ export default function StepForm({ step, nextStep, prevStep }) {
                 },
                 body: JSON.stringify({
                     ...formData,
-                    skills: formData.skills.filter((s) => s.trim() !== ""),
+                    // Send skills as strings "name:proficiency" for compatibility
+                    skills: (formData.skills || [])
+                        .filter((s) => s && (s.name || '').trim() !== "")
+                        .map((s) => `${s.name.trim()}:${Math.max(0, Math.min(100, Number(s.proficiency) || 0))}`),
                     subjects: formData.subjects.filter((s) => s.trim() !== ""),
                 }),
             });
@@ -323,7 +428,14 @@ export default function StepForm({ step, nextStep, prevStep }) {
         }
         if (step === 2) {
             if (!formData.interests.length) stepErrors.interests = "At least one interest is required";
-            if (formData.skills.some((s) => s.trim() === "")) stepErrors.skills = "Skill cannot be empty";
+            if (!formData.skills.length) {
+                stepErrors.skills = "Add at least one skill";
+            } else {
+                const hasEmptyName = formData.skills.some((s) => !s || !(s.name || '').trim());
+                const invalidProf = formData.skills.some((s) => Number.isNaN(Number(s?.proficiency)) || Number(s?.proficiency) < 0 || Number(s?.proficiency) > 100);
+                if (hasEmptyName) stepErrors.skills = "Skill name cannot be empty";
+                else if (invalidProf) stepErrors.skills = "Proficiency must be between 0 and 100";
+            }
         }
         if (step === 3) {
             if (!formData.usedAIToolBefore) stepErrors.usedAIToolBefore = "This field is required";
@@ -525,8 +637,8 @@ export default function StepForm({ step, nextStep, prevStep }) {
                             ))}
                         </div>
                     </div>
-                    <label className="block font-semibold text-lg mt-4 flex items-center gap-2"><FiAward className="text-blue-500" /> Add Your Skills <span className="text-red-500">*</span></label>
-                    <SkillInput
+                    <label className="block font-semibold text-lg mt-4 flex items-center gap-2"><FiAward className="text-blue-500" /> Add Your Skills (with proficiency) <span className="text-red-500">*</span></label>
+                    <SkillsEditor
                         skills={formData.skills}
                         setSkills={(skills) => handleChange("skills", skills)}
                     />

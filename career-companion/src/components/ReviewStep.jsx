@@ -44,9 +44,32 @@ export default function ReviewStep({ formData, prevStep, handleSubmit }) {
         biggestCareerChallenge: "Biggest Career Challenge",
     };
 
-    const formatValue = (value) => {
+    const formatValue = (key, value) => {
+        if (key === 'skills') {
+            if (!Array.isArray(value) || value.length === 0) return <span className="text-gray-400">None</span>;
+            const toLabel = (s) => {
+                if (s && typeof s === 'object') {
+                    const name = (s.name || '').trim();
+                    const prof = Math.max(0, Math.min(100, Number(s.proficiency) || 0));
+                    return name ? `${name} (${prof}/100)` : '';
+                }
+                if (typeof s === 'string') {
+                    if (s.includes(':')) {
+                        const [n, p] = s.split(':');
+                        const prof = parseInt(p, 10);
+                        return `${(n || '').trim()} (${isNaN(prof) ? 0 : Math.max(0, Math.min(100, prof))}/100)`;
+                    }
+                    const match = s.match(/\((\d{1,3})\s*\/\s*100\)/);
+                    const prof = match ? parseInt(match[1], 10) : undefined;
+                    return prof !== undefined ? `${s.replace(/\(.*\)/, '').trim()} (${Math.max(0, Math.min(100, prof))}/100)` : s;
+                }
+                return String(s);
+            };
+            const labels = value.map(toLabel).filter(Boolean);
+            return labels.length ? labels.join(', ') : <span className="text-gray-400">None</span>;
+        }
         if (Array.isArray(value)) {
-            return value.length ? value.join(", ") : <span className="text-gray-400">None</span>;
+            return value.length ? value.join(', ') : <span className="text-gray-400">None</span>;
         }
         if (!value) return <span className="text-gray-400">None</span>;
         return value;
@@ -87,7 +110,7 @@ export default function ReviewStep({ formData, prevStep, handleSubmit }) {
                             <span className="text-gray-700 font-semibold">{fieldLabels[key] || key}</span>
                         </div>
                         <div className="text-base text-gray-900 pl-7">
-                            {formatValue(formData[key])}
+                            {formatValue(key, formData[key])}
                         </div>
                     </div>
                 ))}

@@ -1,8 +1,28 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CareerSuggestionCard = ({ data }) => {
     const [showModal, setShowModal] = useState(false);
     const modalRef = useRef(null);
+    const navigate = useNavigate();
+
+    const handleViewRoadmap = () => {
+        try {
+            navigate('/roadmap', {
+                state: {
+                    career: {
+                        title: data?.title,
+                        skills: data?.skills || [],
+                        resources: data?.resources || [],
+                        description: data?.description || '',
+                        icon: data?.icon || '',
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Navigation to roadmap failed:', e);
+        }
+    };
 
     // if (!data) return null;
 
@@ -48,12 +68,20 @@ return (
                 <p className="text-gray-700 dark:text-gray-300 mb-4">{description}</p>
             </div>
 
-            <button
-                onClick={() => setShowModal(true)}
-                className="mt-auto w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-md text-sm font-medium transition-all duration-300"
-            >
-                Read More
-            </button>
+            <div className="mt-auto flex flex-col sm:flex-row gap-3">
+                <button
+                    onClick={handleViewRoadmap}
+                    className="w-full sm:w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm font-semibold transition-colors"
+                >
+                    View Roadmap
+                </button>
+                <button
+                    onClick={() => setShowModal(true)}
+                    className="w-full sm:w-1/2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-md text-sm font-medium transition-all duration-300"
+                >
+                    Read More
+                </button>
+            </div>
         </div>
 
         {showModal && (
@@ -128,6 +156,20 @@ return (
                                 </ul>
                             </div>
                         )}
+                        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={handleViewRoadmap}
+                                className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors"
+                            >
+                                View Roadmap
+                            </button>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="w-full sm:w-auto px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md font-semibold transition-colors dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

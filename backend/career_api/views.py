@@ -1,23 +1,26 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from .serializers import CareerProfileSerializer
 from .models import CareerProfile
 from openai import OpenAI
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 # 🔐 OpenRouter API Client
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",
+    api_key="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",
 )
 
 # 🔁 Submit Career Profile + Get AI Suggestions
 class CareerSubmitView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = CareerProfileSerializer(data=request.data)
         if serializer.is_valid():
             profile = serializer.save()
+           
 
             prompt = f"""
 You are an AI career advisor. The user has provided their profile below. Based on this, suggest exactly 3 career paths that align with their background, interests, and constraints.
@@ -25,14 +28,21 @@ You are an AI career advisor. The user has provided their profile below. Based o
 User Profile:
 - Full Name: {profile.fullName}
 - Email: {profile.email}
-- Education: {profile.education}
-- Experience: {profile.experience}
+- Currently Living: {profile.currentlyLiving}
+- Grade/Year: {profile.gradeOrYear}
+- Subjects: {profile.subjects}
+- Last Class Percentage or CGPA: {profile.lastClassPercentageOrCGPA}
+- Current Course: {profile.currentCourse}
+- Last Year CGPA: {profile.lastYearCGPA}
 - Skills: {profile.skills}
 - Interests: {profile.interests}
-- Goals: {profile.goals}
-- Preferred Fields: {profile.preferredField}
+- Used AI Tool Before: {profile.usedAIToolBefore}
+- Experience: {profile.experience}
+- Main Goal: {profile.mainGoal}
+- Learning Time Available: {profile.learningTime}
 - Learning Style: {profile.learningStyle}
-- Challenges: {profile.challenges}
+- Long-term Career Goal: {profile.longTermCareerGoal}
+- Biggest Career Challenge: {profile.biggestCareerChallenge}
 
 Respond only with a valid JSON object using the following structure. Make sure to include labor market data like job demand, salary estimates, industry trends, and future scope.
 
@@ -53,7 +63,7 @@ JSON format:
       "reason": "string",                         // Why this is a good fit for the user
       "labor_market": {{
         "job_demand": "string",                   // e.g., High, Moderate, Low
-        "salary_range": "string",                 // e.g., 5-10/LPA Rupees
+        "salary_range": "string",                 // e.g., 5-10 LPA Rupees
         "industry_growth": "string",              // e.g., 'Growing at 12% annually'
         "future_scope": "string"                  // e.g., 'High demand expected for the next decade'
       }}
@@ -64,7 +74,7 @@ JSON format:
 
 Do not include any extra text, explanation, or commentary. Only return a valid JSON object as per the structure above.
 """
-            print("prompt : ", prompt)
+            # print("prompt : ", prompt)
 
             try:
                 response = client.chat.completions.create(
@@ -79,10 +89,13 @@ Do not include any extra text, explanation, or commentary. Only return a valid J
                     }
                 )
                 suggestion = response.choices[0].message.content
+                print("AI Suggestion:", suggestion)
+
 
                 # 💾 Save suggestion to profile
                 profile.suggestion = suggestion
                 profile.save()
+
 
                 return Response({"success": True, "suggestions": suggestion}, status=status.HTTP_200_OK)
 
@@ -94,15 +107,17 @@ Do not include any extra text, explanation, or commentary. Only return a valid J
 
 # 📊 Serve Data to Dashboard UI
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def dashboard_data(request):
     try:
-        profile = CareerProfile.objects.latest('created_at')
+        user = request.user
+        profile = CareerProfile.objects.filter(email=user.email).latest('created_at')
 
         skills_list = profile.skills if isinstance(profile.skills, list) else []
 
         data = {
             "fullName": profile.fullName,
-            "careerSuggestion": {
+            "careerSuggestion":     {
                 "role": profile.preferredField or "AI/Data Specialist",
                 "company": "DataViz Co.",
                 "location": "Remote",
@@ -133,8 +148,6 @@ def dashboard_data(request):
     except CareerProfile.DoesNotExist:
         return Response({"error": "No profile found."}, status=404)
 
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import permission_classes
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
