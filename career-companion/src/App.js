@@ -7,6 +7,8 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import { Toaster } from "react-hot-toast";
 import "./index.css";
+import RoadmapGenerate from "./pages/RoadmapGenerate";
+import RoadmapDetail from "./pages/RoadmapDetail";
 
 // Simple auth guard for routes
 function isTokenValid(token) {
@@ -55,6 +57,8 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+          <Route path="/roadmap" element={<RequireAuth><RoadmapGenerate /></RequireAuth>} />
+          <Route path="/roadmap/:id" element={<RequireAuth><RoadmapDetail /></RequireAuth>} />
         </Routes>
       </Router>
 

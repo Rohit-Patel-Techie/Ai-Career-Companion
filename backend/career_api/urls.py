@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CareerSubmitView, dashboard_data
+from .views import CareerSubmitView, dashboard_data, GenerateRoadmapView, RoadmapDetailView
 from . import views_auth, views
 
 urlpatterns = [
@@ -16,4 +16,8 @@ urlpatterns = [
     # Profile endpoints
     path('profile/', views_auth.ProfileView.as_view(), name='profile'),
     path('user-profile/', views.user_profile, name='user-profile'),
+
+    # Roadmap endpoints
+    path('roadmaps/generate/', GenerateRoadmapView.as_view(), name='roadmap-generate'),
+    path('roadmaps/<int:short_id>/', RoadmapDetailView.as_view(), name='roadmap-detail'),
 ]

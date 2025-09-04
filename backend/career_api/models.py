@@ -78,3 +78,19 @@ class OTP(models.Model):
 
     def __str__(self):
         return f"OTP for {self.user.email} - {self.otp_code}"
+
+class Roadmap(models.Model):
+    id = models.AutoField(primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='roadmaps')
+    title = models.CharField(max_length=255)
+    career_input = models.JSONField()
+    profile_snapshot = models.JSONField(blank=True, null=True)
+    prompt = models.TextField()
+    model = models.CharField(max_length=100, default='deepseek/deepseek-chat-v3-0324:free')
+    status = models.CharField(max_length=32, default='generated')
+    content = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Roadmap #{self.id} - {self.title}"

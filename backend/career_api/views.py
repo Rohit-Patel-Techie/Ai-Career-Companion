@@ -2,15 +2,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from .serializers import CareerProfileSerializer
-from .models import CareerProfile
+from .serializers import CareerProfileSerializer, RoadmapSerializer
+from .models import CareerProfile, Roadmap
 from openai import OpenAI
 from rest_framework.permissions import AllowAny, IsAuthenticated
+import json
+from decouple import config
 
-# 🔐 OpenRouter API Client
+# 🔐 OpenRouter API Client (env)
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",
+    api_key=config("OPENROUTER_API_KEY", default=""),
 )
 
 # 🔁 Submit Career Profile + Get AI Suggestions
@@ -179,3 +181,180 @@ def user_profile(request):
         "biggestCareerChallenge": profile.biggestCareerChallenge if profile else "",
     }
     return Response(data)
+
+
+class GenerateRoadmapView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        career = request.data.get('career')
+        if not career or not isinstance(career, dict):
+            return Response({"error": "Missing or invalid 'career' payload."}, status=400)
+
+        # Load latest user profile if exists (optional but helps prompt quality)
+        profile = CareerProfile.objects.filter(email=user.email).order_by('-created_at').first()
+        profile_snapshot = None
+        if profile:
+            profile_snapshot = {
+                "fullName": profile.fullName,
+                "email": profile.email,
+                "currentlyLiving": profile.currentlyLiving,
+                "gradeOrYear": profile.gradeOrYear,
+                "subjects": profile.subjects,
+                "lastClassPercentageOrCGPA": profile.lastClassPercentageOrCGPA,
+                "currentCourse": profile.currentCourse,
+                "lastYearCGPA": profile.lastYearCGPA,
+                "skills": profile.skills,
+                "interests": profile.interests,
+                "usedAIToolBefore": profile.usedAIToolBefore,
+                "experience": profile.experience,
+                "mainGoal": profile.mainGoal,
+                "learningTime": profile.learningTime,
+                "learningStyle": profile.learningStyle,
+                "longTermCareerGoal": profile.longTermCareerGoal,
+                "biggestCareerChallenge": profile.biggestCareerChallenge,
+            }
+
+        base_title = career.get('title') or 'Career Roadmap'
+        # Strict JSON-only roadmap schema
+        schema_hint = json.dumps({
+            "title": "string",
+            "overview": "string",
+            "duration_weeks": 16,
+            "prerequisites": ["string"],
+            "skills_to_master": ["string"],
+            "phases": [
+                {
+                    "name": "string",
+                    "weeks": [
+                        {
+                            "week": 1,
+                            "focus": "string",
+                            "topics": ["string"],
+                            "resources": [
+                                {"name": "string", "type": "video", "url": "string", "free": True}
+                            ],
+                            "hands_on": [
+                                {"task": "string", "est_hours": 6}
+                            ],
+                            "milestone": "string",
+                            "assessment": "string"
+                        }
+                    ]
+                }
+            ],
+            "projects": [
+                {"name": "string", "description": "string", "deliverables": ["string"]}
+            ],
+            "interview_prep": {"topics": ["string"], "resources": [{"name": "string", "url": "string"}]},
+            "next_steps": ["string"],
+            "estimated_outcomes": ["string"]
+        }, indent=2)
+
+        # Build prompt
+        prompt = f"""
+You are an AI career roadmap generator. Create a realistic, step-by-step, weekly learning roadmap with projects and assessments. Output must be STRICT JSON matching the schema below. Do not include backticks or extra commentary. No markdown.
+
+USER PROFILE SNAPSHOT (may be empty):\n{json.dumps(profile_snapshot, ensure_ascii=False)}
+SELECTED CAREER INPUT:\n{json.dumps(career, ensure_ascii=False)}
+
+RESPONSE JSON SCHEMA (example values only, follow structure):
+{schema_hint}
+"""
+
+        if not client.api_key:
+            return Response({"error": "Missing OpenRouter API key. Set OPENROUTER_API_KEY in environment."}, status=500)
+
+        try:
+            response = client.chat.completions.create(
+                model="deepseek/deepseek-chat-v3-0324:free",
+                messages=[
+                    {"role": "system", "content": "You are an expert roadmap planner. Output only valid JSON that matches the provided schema."},
+                    {"role": "user", "content": prompt},
+                ],
+                extra_headers={
+                    "HTTP-Referer": "http://localhost:3000/",
+                    "X-Title": "Career Companion"
+                }
+            )
+            raw = response.choices[0].message.content
+
+            # Try parse JSON; if model wrapped in code-fences, strip them
+            cleaned = raw.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.strip('`')
+                if cleaned.startswith("json"):
+                    cleaned = cleaned[4:]
+                cleaned = cleaned.strip()
+
+            roadmap_json = json.loads(cleaned)
+        except Exception as e:
+            return Response({"error": f"Roadmap generation failed: {str(e)}"}, status=500)
+
+        # Persist roadmap
+        roadmap = Roadmap.objects.create(
+            user=user,
+            title=roadmap_json.get('title', base_title),
+            career_input=career,
+            profile_snapshot=profile_snapshot,
+            prompt=prompt,
+            model="deepseek/deepseek-chat-v3-0324:free",
+            status='generated',
+            content=roadmap_json,
+        )
+
+        data = RoadmapSerializer(roadmap).data
+        return Response(data, status=200)
+
+
+class RoadmapDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, short_id: int):
+        user = request.user
+        try:
+            roadmap = Roadmap.objects.get(id=short_id, user=user)
+        except Roadmap.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+        return Response(RoadmapSerializer(roadmap).data, status=200)
+
+    def patch(self, request, short_id: int):
+        """
+        Persist progress state into roadmap.content["progress"].
+        Accepts either:
+          - {"key": "some-id", "value": true}
+          - {"state": {"id1": true, "id2": false}}
+        Returns: {"progress": { ... }}
+        """
+        user = request.user
+        try:
+            roadmap = Roadmap.objects.get(id=short_id, user=user)
+        except Roadmap.DoesNotExist:
+            return Response({"error": "Not found"}, status=404)
+
+        payload = request.data or {}
+        key = payload.get("key")
+        value = payload.get("value")
+        bulk_state = payload.get("state")
+
+        content = roadmap.content or {}
+        progress = content.get("progress")
+        if not isinstance(progress, dict):
+            progress = {}
+
+        if isinstance(bulk_state, dict):
+            # Merge bulk updates
+            for k, v in bulk_state.items():
+                if isinstance(v, bool):
+                    progress[str(k)] = v
+        elif isinstance(key, str) and isinstance(value, bool):
+            progress[key] = value
+        else:
+            return Response({"error": "Invalid payload"}, status=400)
+
+        content["progress"] = progress
+        roadmap.content = content
+        roadmap.save(update_fields=["content"]) 
+
+        return Response({"progress": progress}, status=200)

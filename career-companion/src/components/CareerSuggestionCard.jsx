@@ -16,6 +16,8 @@ const CareerSuggestionCard = ({ data }) => {
                         resources: data?.resources || [],
                         description: data?.description || '',
                         icon: data?.icon || '',
+                        reason: data?.reason || '',
+                        labor_market: data?.labor_market || null,
                     }
                 }
             });

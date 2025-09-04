@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CareerProfile, CustomUser, OTP
+from .models import CareerProfile, CustomUser, OTP, Roadmap
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,3 +16,8 @@ class CareerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareerProfile
         fields = '__all__'
+
+class RoadmapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Roadmap
+        fields = ['id', 'uuid', 'title', 'content', 'career_input', 'profile_snapshot', 'status', 'model', 'created_at']
